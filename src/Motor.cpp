@@ -1,10 +1,9 @@
 // Nesta versão o motor de passo gira até que caia o produto
+#include "Debug.h"
 #include "Motor.h"
 
 // TODO:
 // - adicionar parametro idmaq
-
-#define DEBUG 0
 
 #define MAX_PRODUTOS 1
 #define VELOC_MOTOR 15 //RPM
@@ -29,19 +28,6 @@ int estado_sensor = 0;
 int contador = 0;
 
 void setup_motor() {
-  // initialize the serial port:
-  Serial.begin(9600);
-
-#if DEBUG == 1
-  Serial.println("modo DEBUG");
-#else
-  // Conecta-se ao Wi-Fi
-  setup_wifi();
-  conectar_wifi();
-
-  // Configura o broker MQTT
-  setup_mqtt();
-#endif
   pinMode(enable_motor1, OUTPUT);
   pinMode(enable_motor2, OUTPUT);
 
@@ -55,7 +41,6 @@ void setup_motor() {
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(led_verm, OUTPUT);
   pinMode(led_amar, OUTPUT);
-
 }
 
 // --- FUNÇÕES DE MOTOR ---
@@ -109,7 +94,7 @@ void loop_motor() {
   digitalWrite(led_verm, HIGH);
   digitalWrite(led_amar, LOW);
 
-#if DEBUG != 1
+#if DEBUG_MOTOR != 1
   if (!client.connected()) {
     reconnect();
   }
