@@ -14,6 +14,10 @@ void freioMotor();
 
 void movimenta();
 
-void sensor_otico() ;
+void sensor_otico();
 
-void loop_motor() ;
+void loop_motor();
+
+void verifica_sensor();
+
+void liberar_produto();

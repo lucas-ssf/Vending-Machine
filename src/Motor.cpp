@@ -8,7 +8,7 @@
 #define MAX_PRODUTOS 1
 #define VELOC_MOTOR 15 //RPM
 
-                  //60/VELOC_MOTOR = tempo de uma rotação
+                 // 60/VELOC_MOTOR = tempo de uma rotação
 #define TEMPO_MAX (60/VELOC_MOTOR * MAX_PRODUTOS * 1e3) // tempo do ultimo produto chegar ate o sensor_parada, em milissegundos
 
 const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
@@ -17,8 +17,7 @@ const int stepsPerRevolution = 200;  // change this to fit the number of steps p
 Stepper myStepper(stepsPerRevolution,  27, 26, 25, 33);
 const int enable_motor1 = 21, enable_motor2 = 32;
 
-const int buttonPin = 13, led_verm = 22, led_amar = 23;
-int buttonState = LOW;
+const int led_parado = 22, led_movimento = 23;
 int tempoInicialButton = 0;
 
 const int sensor_produto = 4; // Sensor optico
@@ -38,9 +37,10 @@ void setup_motor() {
   // set the speed at 60 rpm:
   myStepper.setSpeed(VELOC_MOTOR);
   
-  pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(led_verm, OUTPUT);
-  pinMode(led_amar, OUTPUT);
+  pinMode(led_parado, OUTPUT);
+  pinMode(led_movimento, OUTPUT);
+  digitalWrite(led_parado, HIGH);
+  digitalWrite(led_movimento, LOW);
 }
 
 // --- FUNÇÕES DE MOTOR ---
@@ -89,21 +89,7 @@ void sensor_otico() {
   publicar_mensagem(MQTT_STATUS, mensagem);
 }
 
-
-void loop_motor() {
-  digitalWrite(led_verm, HIGH);
-  digitalWrite(led_amar, LOW);
-
-#if DEBUG_MOTOR != 1
-  if (!client.connected()) {
-    reconnect();
-  }
-
-
-  // Processa as mensagens recebidas e mantém a conexão com o broker MQTT
-  client.loop();
-#endif
-
+void verifica_sensor(){
   if (digitalRead(sensor_parada)==HIGH) {
     freioMotor();
     delay(2000);
@@ -111,19 +97,12 @@ void loop_motor() {
     Serial.println("Produto retirado!");
     sensor_otico();
   }
+}
 
- buttonState = ((not digitalRead(buttonPin)) || mqtt_acionar);
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-  if (buttonState == HIGH) {
-    delay(50);
-    buttonState = ((not digitalRead(buttonPin)) || mqtt_acionar);
-    if (buttonState == HIGH) {
-      digitalWrite(led_verm, LOW);
-      digitalWrite(led_amar, HIGH);
-      Serial.println("movimenta");
+void liberar_produto(){
+      digitalWrite(led_parado, LOW);
+      digitalWrite(led_movimento, HIGH);
       movimenta();
-      mqtt_acionar = LOW;
-      buttonState = LOW;
-    }
-  }
+      digitalWrite(led_parado, HIGH);
+      digitalWrite(led_movimento, LOW);
 }
