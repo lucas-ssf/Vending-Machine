@@ -12,7 +12,8 @@ class Motor{
     int tempo_max, velocidade,
         enable1, enable2,
         sensor_produto, sensor_parada,
-        led_parado, led_movimento;
+        led_parado, led_movimento,
+        contagem;
     Stepper myStepper;
   public:
     Motor(
@@ -36,4 +37,5 @@ class Motor{
     void verifica_sensor();
     void liberar_produto();
     const char*getid();
+    void setContagem(int reabastecer);
 };

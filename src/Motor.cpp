@@ -19,7 +19,8 @@ Motor::Motor(
                int led_movimento,
                Stepper myStepper
     ):
-    myStepper(myStepper)
+    myStepper(myStepper),
+    contagem(0)
     {
       this-> id             = id;
       this-> tempo_max      = tempo_max;
@@ -87,11 +88,10 @@ Motor::Motor(
     }
     
     void Motor::sensor_otico() {
-      int *p_contador = &contador;
       delay(5);
-      if (*p_contador > 0)(*p_contador)--;
+      if (contagem > 0)contagem--;
       char mensagem[10];
-      sprintf(mensagem, "%d\0", *p_contador);
+      sprintf(mensagem, "%d\0", contagem);
       publicar_mensagem(MQTT_STATUS, mensagem);
     }
     
@@ -115,4 +115,10 @@ Motor::Motor(
 
     const char* Motor::getid(){
       return id;
+    }
+    
+    void Motor::setContagem(int reabastecer){
+      contagem = reabastecer;
+      Serial.print("contagem = ");
+      Serial.println(contagem);
     }

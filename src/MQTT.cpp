@@ -4,8 +4,14 @@
 extern char mqtt_server[40];        // Broker MQTT
 extern char mqtt_port[6];           // Porta MQTT
 const char* mqtt_id = "bandeja01"; // ID do cliente MQTT
-const char* mqtt_topic = mqtt_id; //precisa ser modificado
-mqtt_recebido *mensagem_recebida;
+const char* mqtt_topic[] = { // topicos em que estará escrito
+  "bandeja01/calha01/acionar/",  
+  "bandeja01/calha01/reabastecer/",  
+};
+const int N_TOPICOS = sizeof(mqtt_topic)/sizeof(mqtt_topic[0]);
+
+mqtt_recebido_t mqtt_recebido;
+mqtt_recebido_t *p_mqtt_recebido;
 
 // Cliente 
 WiFiClient espClient;
@@ -29,7 +35,7 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.print(topic);
   Serial.print(length);
   Serial.print(". Message: ");
-  char bandeja[64], calha[64], comando[64];
+  //char bandeja[64], calha[64], comando[64];
   
   message[length] = 0; // Esse filtro é necessário pois junto com a mensagem, vêm outros bytes aleatórios
   Serial.println((char*)message);
@@ -43,21 +49,21 @@ void callback(char* topic, byte* message, unsigned int length) {
   char* token = strtok(topic, "/");
   for(int i=0; i < 3 && (token != NULL); i++){
     if(i==0){
-      strcpy(bandeja,token);
-      bandeja[strlen(token)]=0;
+      strcpy(p_mqtt_recebido->bandeja, token);
+      p_mqtt_recebido->bandeja[strlen(token)]=0;
     }
     else if(i==1){
-      strcpy(calha,token);
-      calha[strlen(token)]=0;
+      strcpy(p_mqtt_recebido->calha, token);
+      p_mqtt_recebido->calha[strlen(token)]=0;
     }
     else {
-      strcpy(comando,token);
-      comando[strlen(token)]=0;
+      strcpy(p_mqtt_recebido->comando, token);
+      p_mqtt_recebido->comando[strlen(token)]=0;
     }
     token = strtok(NULL, "/");
   }
-
-  mensagem_recebida->recebido = true;
+  if(message) strcpy(p_mqtt_recebido->subcomando, (char*)message);
+  p_mqtt_recebido->recebido   = true;
   /*
   if (strcmp(topic,MQTT_ERROR)==0 && messageTemp=="limpar") {Serial.println("mqtt_error = 0");mqtt_error = 0;}
   if (messageTemp == "acionar") mqtt_acionar = HIGH;
@@ -80,7 +86,8 @@ void reconnect() {
     
     if (client.connect(mqtt_id)) {
       Serial.println("Conectado!");
-      client.subscribe(mqtt_topic);
+      for(int i = 0; i < N_TOPICOS; i++)
+      client.subscribe(mqtt_topic[i]);
       //client.subscribe(MQTT_COMANDO);
       //client.subscribe(MQTT_ERROR);
     } else {
@@ -91,8 +98,8 @@ void reconnect() {
 }
 
 void setup_mqtt(){
-  mensagem_recebida =  (mqtt_recebido*)malloc(sizeof(mqtt_recebido));
-  mensagem_recebida->recebido = false;
+  p_mqtt_recebido = &mqtt_recebido;
+  p_mqtt_recebido->recebido = false;
 
   Serial.print("Servidor MQTT:");
   Serial.print(mqtt_server);

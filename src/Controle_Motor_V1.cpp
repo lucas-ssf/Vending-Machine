@@ -6,8 +6,11 @@
 const int buttonPin = 13;
 int buttonState = LOW;
 extern const int stepsPerRevolution = 200;
-extern mqtt_recebido *mensagem_recebida;
+extern mqtt_recebido_t *p_mqtt_recebido;
 const int N_MOTORES = 1; //número de motores
+
+//Processa a informção recebida pelo MQTT e repassa para o motor
+void processa_mensagem(Motor*motor, mqtt_recebido_t*p_mqtt_recebido);
 
 Motor motor[N_MOTORES]={Motor(
   "calha01", //id
@@ -25,8 +28,9 @@ Motor motor[N_MOTORES]={Motor(
 
 void setup() {
   Serial.begin(9600);
-    
+  
   pinMode(buttonPin, INPUT_PULLUP);
+
 
 #if DEBUG_MOTOR == 1
   print_debug(DEBUG MOTOR); 
@@ -48,13 +52,13 @@ void loop() {
    // Processa as mensagens recebidas e mantém a conexão com o broker MQTT
   client.loop();
 #endif
-  buttonState = (not (digitalRead(buttonPin)) || mqtt_acionar);
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-  if(mensagem_recebida->recebido){
-    mensagem_recebida->recebido = false;
+
+  // p_mqtt_recebido é uma struct do tipo mqtt_recebido, está definida em MQTT.h
+  if(p_mqtt_recebido->recebido){
+    p_mqtt_recebido->recebido = false;
 
     for(int i = 0; i < N_MOTORES; i++){
-      if(strcmp(mensagem_recebida->calha, motor[i].getid()) == 0){
+      if(strcmp(p_mqtt_recebido->calha, motor[i].getid()) == 0){
         atual = i;
         break;
       }
@@ -65,11 +69,25 @@ void loop() {
     //  delay(50);
     //  buttonState = (not (digitalRead(buttonPin)) || mqtt_acionar);
     //  if (buttonState == HIGH) {
-        Serial.println("movimenta");
-        motor[0].liberar_produto();
-        mqtt_acionar = LOW;
-        buttonState = LOW;
+    processa_mensagem(&motor[atual], p_mqtt_recebido);
+//        Serial.println("movimenta");
+//        motor[0].liberar_produto();
+//        mqtt_acionar = LOW;
+//        buttonState = LOW;
     //  }
     //}
   } 
+}
+
+void processa_mensagem(Motor*motor, mqtt_recebido_t*p_mqtt_recebido){
+  char*comando = p_mqtt_recebido->comando;
+  char*subcomando = p_mqtt_recebido->subcomando;
+
+  if(strcmp(comando,"acionar") == 0){
+    Serial.println("acionando motor...");
+    motor->liberar_produto();
+  }
+  if(strcmp(comando,"reabastecer") == 0){
+    motor->setContagem(atoi(subcomando));
+  }
 }

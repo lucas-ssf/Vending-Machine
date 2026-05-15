@@ -11,10 +11,11 @@
 #define MQTT_COMANDO "vending/comando"
 
 typedef struct{
-    char *bandeja, *calha, *comando, *subcomando;
+    char bandeja[64], calha[64], comando[64], subcomando[64];
     bool recebido;
-}mqtt_recebido;
+}mqtt_recebido_t;
 
+extern mqtt_recebido_t*p_mqtt_recebido;
 extern PubSubClient client;
 extern int mqtt_acionar, mqtt_parar, mqtt_error;
 // extern int contador;
