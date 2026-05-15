@@ -3,7 +3,7 @@
 
 extern char mqtt_server[40];        // Broker MQTT
 extern char mqtt_port[6];           // Porta MQTT
-const char* mqtt_id = "bandeja01"; // ID do cliente MQTT
+const char* mqtt_id; // ID do cliente MQTT
 const char* mqtt_topic[] = { // topicos em que estará escrito
   "bandeja01/calha01/acionar/",  
   "bandeja01/calha01/reabastecer/",  
@@ -18,10 +18,9 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 int mqtt_acionar = LOW, mqtt_parar = LOW, mqtt_error = 0;
-extern int contador;
 
+// Publica a mensagem no tópico MQTT
 void publicar_mensagem(const char* topico, const char* mensagem){
-  // Publica a mensagem no tópico MQTT
   Serial.print("Enviando para o MQTT no tópico: ");
   Serial.print(topico);
   Serial.print(" | Mensagem: ");
@@ -35,7 +34,6 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.print(topic);
   Serial.print(length);
   Serial.print(". Message: ");
-  //char bandeja[64], calha[64], comando[64];
   
   message[length] = 0; // Esse filtro é necessário pois junto com a mensagem, vêm outros bytes aleatórios
   Serial.println((char*)message);
@@ -88,8 +86,6 @@ void reconnect() {
       Serial.println("Conectado!");
       for(int i = 0; i < N_TOPICOS; i++)
       client.subscribe(mqtt_topic[i]);
-      //client.subscribe(MQTT_COMANDO);
-      //client.subscribe(MQTT_ERROR);
     } else {
       Serial.println("Falha, tentando novamente em 5 segundos...");
       delay(5000);
@@ -97,7 +93,8 @@ void reconnect() {
   }
 }
 
-void setup_mqtt(){
+void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas){
+  mqtt_id = id_bandeja;
   p_mqtt_recebido = &mqtt_recebido;
   p_mqtt_recebido->recebido = false;
 
@@ -107,4 +104,14 @@ void setup_mqtt(){
   Serial.println(mqtt_port);
   client.setServer(mqtt_server, atoi(mqtt_port));
   client.setCallback(callback);
+
+  inicializar_topicos(N_CALHAS);
+}
+
+// inicializa os topicos tendo em conta:
+// a)id da bandeja
+// b)id de cada uma das calhas
+void inicializar_topicos(const int N_CALHAS){
+  for(int i = 0; i < N_CALHAS; i++){
+  }
 }

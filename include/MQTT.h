@@ -18,7 +18,6 @@ typedef struct{
 extern mqtt_recebido_t*p_mqtt_recebido;
 extern PubSubClient client;
 extern int mqtt_acionar, mqtt_parar, mqtt_error;
-// extern int contador;
 extern char mqtt_server[40];
 extern char mqtt_port[6];
 
@@ -26,6 +25,7 @@ void publicar_mensagem(const char* topico, const char* mensagem);
 void callback(char* topic, byte* message, unsigned int length);
 void reconnect();
 void testar_conexao();
-void setup_mqtt();
+void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas);
+void inicializar_topicos(const int N_MOTORERS);
 
 #endif

@@ -1,12 +1,9 @@
-// Nesta versão o motor de passo gira até que caia o produto
+// Nesta versão o calha de passo gira até que caia o produto
 #include <Stepper.h>
 #include "WifiConfig.h"
 #include "MQTT.h"
 
-// TODO:
-// - adicionar parametro idmaq
-
-class Motor{
+class Calha{
   private:
     const char* id;
     int tempo_max, velocidade,
@@ -16,7 +13,7 @@ class Motor{
         contagem;
     Stepper myStepper;
   public:
-    Motor(
+    Calha(
                const char* id,
                int tempo_max,
                int velocidade,
@@ -28,12 +25,12 @@ class Motor{
                int led_movimento,
                Stepper myStepper
     );
-    void setup_motor();
-    void desligarMotor();
-    void freioMotor();
+    void setup_calha();
+    void desligarCalha();
+    void freioCalha();
     void movimenta();
     void sensor_otico();
-    void loop_motor();
+    void loop_calha();
     void verifica_sensor();
     void liberar_produto();
     const char*getid();
