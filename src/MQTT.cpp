@@ -4,11 +4,13 @@
 extern char mqtt_server[40];        // Broker MQTT
 extern char mqtt_port[6];           // Porta MQTT
 const char* mqtt_id; // ID do cliente MQTT
-const char* mqtt_topic[] = { // topicos em que estará escrito
-  "bandeja01/calha01/acionar/",  
-  "bandeja01/calha01/reabastecer/",  
-};
-const int N_TOPICOS = sizeof(mqtt_topic)/sizeof(mqtt_topic[0]);
+
+const char*** mqtt_topic;// topicos em que estará escrito
+typedef enum { 
+  acionar,
+  reabastecer,
+  erro
+} comandos; //Comandos para o mqtt_topic
 
 mqtt_recebido_t mqtt_recebido;
 mqtt_recebido_t *p_mqtt_recebido;
@@ -82,9 +84,10 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Tentando conectar ao MQTT...");
     
+    int n_topicos = sizeof(mqtt_topic)/sizeof(mqtt_topic[0]);
     if (client.connect(mqtt_id)) {
       Serial.println("Conectado!");
-      for(int i = 0; i < N_TOPICOS; i++)
+      for(int i = 0; i < n_topicos; i++)
       client.subscribe(mqtt_topic[i]);
     } else {
       Serial.println("Falha, tentando novamente em 5 segundos...");
@@ -111,7 +114,8 @@ void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas){
 // inicializa os topicos tendo em conta:
 // a)id da bandeja
 // b)id de cada uma das calhas
-void inicializar_topicos(const int N_CALHAS){
+void inicializar_topicos(const char* id_bandeja, const int N_CALHAS, const char**ids_calhas){
   for(int i = 0; i < N_CALHAS; i++){
+	//mqtt_topic[i]
   }
 }

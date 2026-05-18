@@ -77,5 +77,8 @@ void processa_mensagem(Calha*calha, mqtt_recebido_t*p_mqtt_recebido){
   }
   if(strcmp(comando,"reabastecer") == 0){
     calha->setContagem(atoi(subcomando));
+    char topico[64];
+    sprintf(topico, "%s/%s/%s",id_bandeja, calha->getid(), "reabastecer");
+    publicar_mensagem(topico, subcomando);
   }
 }
