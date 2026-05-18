@@ -5,11 +5,12 @@ extern char mqtt_server[40];        // Broker MQTT
 extern char mqtt_port[6];           // Porta MQTT
 const char* mqtt_id; // ID do cliente MQTT
 
-char mqtt_topic[10][3][64];// topicos em que estará escrito - tem capacidade para 10 calhas com 3 topicos de 64 bytes
+char mqtt_topic[10][4][64];// topicos em que estará escrito - tem capacidade para 10 calhas com 3 topicos de 64 bytes
 typedef enum { 
   ACIONAR,
   REABASTECER,
   ERRO,
+  _STATUS, //a palavra STATUS já é usada por outra lib
 } comandos; //Comandos para o mqtt_topic
 
 mqtt_recebido_t mqtt_recebido;
@@ -22,12 +23,11 @@ PubSubClient client(espClient);
 int mqtt_acionar = LOW, mqtt_parar = LOW, mqtt_error = 0;
 
 // Publica a mensagem no tópico MQTT
-void publicar_status(char*id_calha, char* mensagem){
-  char topico[64];
-  sprintf(topico, "%s/%s/%s/", mqtt_id, id_calha, "status");
-  Serial.print("Enviando para o MQTT no tópico: ");
-  Serial.print(topico);
-  Serial.println("Mensagem: ");
+void publicar_status(int int_calha, char* mensagem){ // int_calha != id_calha
+  char*topico = mqtt_topic[int_calha][_STATUS];
+  Serial.print("Publicando no tópico: ");
+  Serial.println(topico);
+  Serial.print("Mensagem: ");
   Serial.print(mensagem);
   
   client.publish(topico, mensagem);
@@ -116,14 +116,16 @@ void setup_mqtt(char* id_bandeja, int N_CALHAS, char**ids_calhas){
 // b)id de cada uma das calhas
 void inicializar_topicos(int N_CALHAS, char**ids_calhas){
   for(int i = 0; i < N_CALHAS; i++){
-    char acionar[64], reabastecer[64], erro[64];
+    char acionar[64], reabastecer[64], erro[64], status[64];
     sprintf(acionar,     "%s/%s/%s/", mqtt_id, ids_calhas[i], "acionar"    );
     sprintf(reabastecer, "%s/%s/%s/", mqtt_id, ids_calhas[i], "reabastecer");
     sprintf(erro,        "%s/%s/%s/", mqtt_id, ids_calhas[i], "erro"       );
+    sprintf(status,     "%s/%s/%s/", mqtt_id, ids_calhas[i], "status"     );
 
     strcpy(mqtt_topic[i][ACIONAR], acionar);
     strcpy(mqtt_topic[i][REABASTECER], reabastecer);
     strcpy(mqtt_topic[i][ERRO], erro);
+    strcpy(mqtt_topic[i][_STATUS], status);
   }
 }
 

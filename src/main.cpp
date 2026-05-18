@@ -64,14 +64,15 @@ void loop() {
 
     char*comando = p_mqtt_recebido->comando;
     int subcomando = atoi(p_mqtt_recebido->subcomando);
-    int processa = calha[atual].processa_mensagem(comando,subcomando);
+    int processa = calha[atual].processa_comando(comando,subcomando);
     if(processa == -1){ // se processa_mensagem retorna -1, quer dizer que houve um erro
       Serial.println("enviando erro...");
-      publicar_status(calha[atual].getId(),(char*)"erro");
+      publicar_status(atual,(char*)"erro");
     }
     else if (processa>=0){
-      Serial.print("Contagem: ");
-      Serial.println(processa);
+      char contagem[3]; // máximo = 999
+      sprintf(contagem,"%d",processa);
+      publicar_status(atual,contagem);
     }
   } 
 }

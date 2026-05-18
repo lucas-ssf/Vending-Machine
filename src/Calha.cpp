@@ -17,8 +17,8 @@ Calha::Calha(
                Stepper myStepper
     ):
     myStepper(myStepper),
-    contagem(0) // quantidade de produtos na máquina
-                // só pode ser modificado via setContagem(int)
+    contagem(0), // quantidade de produtos na máquina
+    erro(0)
     {
       this-> id             = id;
       this-> tempo_max      = tempo_max;
@@ -64,14 +64,17 @@ Calha::Calha(
     }
     
     int Calha::movimenta(){
+      if(erro) return 0; // se houver erro, o motor não se movimenta
+
       int tempo_inicial = millis();
       digitalWrite(enable1, HIGH); digitalWrite(enable2, HIGH);
     
       while(verifica_sensor()<0){
-        myStepper.step(20);
+        myStepper.step(1);
         client.loop();
         if ((millis()-tempo_inicial) >= tempo_max){
           Serial.println("Erro!");
+          freioCalha();
           return -1;
         }
       }
@@ -80,12 +83,9 @@ Calha::Calha(
       return 0;
     }
     
-    int Calha::decrementaContagem() {
+    void Calha::decrementaContagem() {
       delay(5);
       if (contagem > 0)contagem--;
-      return contagem;
-      //sprintf(mensagem, "%d\0", contagem);
-      //publicar_mensagem(MQTT_STATUS, mensagem);
     }
     
     //retorna a contagem de produtos atual (apos passar pelo sensor)
@@ -96,7 +96,7 @@ Calha::Calha(
         delay(2000);
         while (digitalRead(sensor_produto)==LOW); //trava o codigo ate que o produto seja retirado
         Serial.println("Produto retirado!");
-        return decrementaContagem();
+        return 0;
       }
       else{
         return -1;
@@ -115,25 +115,26 @@ Calha::Calha(
       return id;
     }
     
-   // void Calha::setContagem(int reabastecer){
-   //   contagem = reabastecer;
-   //   Serial.print("contagem = ");
-   //   Serial.println(contagem);
-   // }
-    
-    int Calha::processa_mensagem(char*comando,int subcomando){
+    int Calha::processa_comando(char*comando,int subcomando){
+      
+      //comando acionar: libera o produto para o cliente, acionando o motor da calha
       if(strcmp(comando,"acionar") == 0){
         Serial.println("acionando calha...");
         if(movimenta()<0){ // se movimenta() retorna -1, houve erro
+          erro = 1;
           return -1;
-        }else{
-          return contagem;
         }
       }
+
+      //comando reabastecer: reinicia a contagem de produtos de acordo com o valor informado
       if(strcmp(comando,"reabastecer") == 0){
         contagem = subcomando;
-        char topico[64];
       }
-      return -2;
+      
+      if(strcmp(comando,"erro") == 0){
+        erro = 0;
+      }
+
+      return contagem;
     }
 

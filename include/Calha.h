@@ -13,7 +13,7 @@ class Calha{
         enable1, enable2,
         sensor_produto, sensor_parada,
         led_parado, led_movimento,
-        contagem;
+        contagem, erro;
     Stepper myStepper;
   public:
     Calha(
@@ -33,11 +33,11 @@ class Calha{
     void freioCalha();
     int  movimenta();
     void loop_calha();
-    int  decrementaContagem();
+    void decrementaContagem();
     int  verifica_sensor();
     void liberar_produto();
     char*getId();
-    int processa_mensagem(char*comando,int subcomando);
+    int processa_comando(char*comando,int subcomando);
 };
 
 #endif

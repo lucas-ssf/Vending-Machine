@@ -17,7 +17,7 @@ extern int mqtt_acionar, mqtt_parar, mqtt_error;
 extern char mqtt_server[40];
 extern char mqtt_port[6];
 
-void publicar_status(char*id_calha, char* mensagem);
+void publicar_status(int int_calha, char* mensagem);
 void callback(char* topic, byte* message, unsigned int length);
 void reconnect(int N_CALHAS);
 void testar_conexao();
