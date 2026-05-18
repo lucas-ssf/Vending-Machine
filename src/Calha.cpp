@@ -103,20 +103,11 @@ Calha::Calha(
       }
     }
     
-    void Calha::liberar_produto(){
-          digitalWrite(led_parado, LOW);
-          digitalWrite(led_movimento, HIGH);
-          movimenta();
-          digitalWrite(led_parado, HIGH);
-          digitalWrite(led_movimento, LOW);
-    }
-
     char* Calha::getId(){
       return id;
     }
     
     int Calha::processa_comando(char*comando,int subcomando){
-      
       //comando acionar: libera o produto para o cliente, acionando o motor da calha
       if(strcmp(comando,"acionar") == 0){
         Serial.println("acionando calha...");

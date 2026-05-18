@@ -35,7 +35,6 @@ class Calha{
     void loop_calha();
     void decrementaContagem();
     int  verifica_sensor();
-    void liberar_produto();
     char*getId();
     int processa_comando(char*comando,int subcomando);
 };
