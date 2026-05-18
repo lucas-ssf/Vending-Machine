@@ -5,15 +5,15 @@ extern char mqtt_server[40];        // Broker MQTT
 extern char mqtt_port[6];           // Porta MQTT
 const char* mqtt_id; // ID do cliente MQTT
 
-const char*** mqtt_topic;// topicos em que estará escrito
+char mqtt_topic[10][3][64];// topicos em que estará escrito - tem capacidade para 10 calhas com 3 topicos de 64 bytes
 typedef enum { 
-  acionar,
-  reabastecer,
-  erro
+  ACIONAR,
+  REABASTECER,
+  ERRO,
 } comandos; //Comandos para o mqtt_topic
 
 mqtt_recebido_t mqtt_recebido;
-mqtt_recebido_t *p_mqtt_recebido;
+mqtt_recebido_t*p_mqtt_recebido;
 
 // Cliente 
 WiFiClient espClient;
@@ -22,11 +22,13 @@ PubSubClient client(espClient);
 int mqtt_acionar = LOW, mqtt_parar = LOW, mqtt_error = 0;
 
 // Publica a mensagem no tópico MQTT
-void publicar_mensagem(const char* topico, const char* mensagem){
+void publicar_status(char*id_calha, char* mensagem){
+  char topico[64];
+  sprintf(topico, "%s/%s/%s/", mqtt_id, id_calha, "status");
   Serial.print("Enviando para o MQTT no tópico: ");
   Serial.print(topico);
-  Serial.print(" | Mensagem: ");
-  Serial.println(mensagem);
+  Serial.println("Mensagem: ");
+  Serial.print(mensagem);
   
   client.publish(topico, mensagem);
 }
@@ -34,8 +36,10 @@ void publicar_mensagem(const char* topico, const char* mensagem){
 void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
+  Serial.print("(");
   Serial.print(length);
-  Serial.print(". Message: ");
+  Serial.print(")");
+  Serial.println("Message: ");
   
   message[length] = 0; // Esse filtro é necessário pois junto com a mensagem, vêm outros bytes aleatórios
   Serial.println((char*)message);
@@ -64,31 +68,27 @@ void callback(char* topic, byte* message, unsigned int length) {
   }
   if(message) strcpy(p_mqtt_recebido->subcomando, (char*)message);
   p_mqtt_recebido->recebido   = true;
-  /*
-  if (strcmp(topic,MQTT_ERROR)==0 && messageTemp=="limpar") {Serial.println("mqtt_error = 0");mqtt_error = 0;}
-  if (messageTemp == "acionar") mqtt_acionar = HIGH;
-  if (messageTemp == "parar") mqtt_parar = HIGH;
-  if (messageTemp.startsWith("reabastecer")){
-    String produtos_reabastecer_str = messageTemp.substring(12);
-    contador = produtos_reabastecer_str.toInt();
-    char mensagem[10];
-    sprintf(mensagem, "%d\0", contador);
-    publicar_mensagem(MQTT_STATUS, mensagem);
-  }
-*/
+  
 }
 
 // Função para conectar ao broker MQTT
-void reconnect() {
+void reconnect(int N_CALHAS) {
   // Tenta se conectar ao broker MQTT
   while (!client.connected()) {
     Serial.print("Tentando conectar ao MQTT...");
     
-    int n_topicos = sizeof(mqtt_topic)/sizeof(mqtt_topic[0]);
     if (client.connect(mqtt_id)) {
       Serial.println("Conectado!");
-      for(int i = 0; i < n_topicos; i++)
-      client.subscribe(mqtt_topic[i]);
+      for(int i = 0; i < N_CALHAS; i++){
+        client.subscribe(mqtt_topic[i][ACIONAR]);
+        client.subscribe(mqtt_topic[i][REABASTECER]);
+        client.subscribe(mqtt_topic[i][ERRO]);
+
+	Serial.println("Subscrito em:");
+        Serial.println(mqtt_topic[i][ACIONAR]);
+        Serial.println(mqtt_topic[i][REABASTECER]);
+        Serial.println(mqtt_topic[i][ERRO]);
+      }
     } else {
       Serial.println("Falha, tentando novamente em 5 segundos...");
       delay(5000);
@@ -96,7 +96,7 @@ void reconnect() {
   }
 }
 
-void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas){
+void setup_mqtt(char* id_bandeja, int N_CALHAS, char**ids_calhas){
   mqtt_id = id_bandeja;
   p_mqtt_recebido = &mqtt_recebido;
   p_mqtt_recebido->recebido = false;
@@ -108,14 +108,22 @@ void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas){
   client.setServer(mqtt_server, atoi(mqtt_port));
   client.setCallback(callback);
 
-  inicializar_topicos(N_CALHAS);
+  inicializar_topicos(N_CALHAS, ids_calhas);
 }
 
 // inicializa os topicos tendo em conta:
 // a)id da bandeja
 // b)id de cada uma das calhas
-void inicializar_topicos(const char* id_bandeja, const int N_CALHAS, const char**ids_calhas){
+void inicializar_topicos(int N_CALHAS, char**ids_calhas){
   for(int i = 0; i < N_CALHAS; i++){
-	//mqtt_topic[i]
+    char acionar[64], reabastecer[64], erro[64];
+    sprintf(acionar,     "%s/%s/%s/", mqtt_id, ids_calhas[i], "acionar"    );
+    sprintf(reabastecer, "%s/%s/%s/", mqtt_id, ids_calhas[i], "reabastecer");
+    sprintf(erro,        "%s/%s/%s/", mqtt_id, ids_calhas[i], "erro"       );
+
+    strcpy(mqtt_topic[i][ACIONAR], acionar);
+    strcpy(mqtt_topic[i][REABASTECER], reabastecer);
+    strcpy(mqtt_topic[i][ERRO], erro);
   }
 }
+

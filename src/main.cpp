@@ -8,24 +8,23 @@ extern const int stepsPerRevolution = 200;
 extern mqtt_recebido_t *p_mqtt_recebido; //ponteiro para uma struct do tipo mqtt_recebido, está definida em MQTT.h
 
 const int N_CALHAS = 1; //número de calhas
-const char**ids_calhas; //vetor com id de cada uma das calhas
+char*ids_calhas[N_CALHAS]; //vetor com id de cada uma das calhas
 
-const char*id_bandeja = "bandeja01";
+char*id_bandeja = (char*)"bandeja01";
 
 //Processa a informção recebida pelo MQTT e repassa para o calha
-void processa_mensagem(Calha*calha, mqtt_recebido_t*p_mqtt_recebido);
 
 Calha calha[N_CALHAS]={
   Calha(
-    "calha01", //id da calha
-    18e3,      //tempo_max 
-    15,        //velocidade
-    21,        //enable_calha[0]
-    32,        //enabla_calha2
-    4,         //sensor_produto
-    19,        //sensor_parada
-    22,        //led_parado
-    23,        //led_movimento
+    (char*)"calha01", //id da calha
+    18e3,             //tempo_max 
+    15,               //velocidade
+    21,               //enable_calha[0]
+    32,               //enabla_calha2
+    4,                //sensor_produto
+    19,               //sensor_parada
+    22,               //led_parado
+    23,               //led_movimento
     Stepper(stepsPerRevolution, 27, 26, 25, 33) //myStepper
   )
 };
@@ -37,7 +36,7 @@ void setup() {
   conectar_wifi();
 
   for(int i = 0; i < N_CALHAS; i++){
-    ids_calhas[i] = calha[i].getid();
+    ids_calhas[i] = calha[i].getId();
     calha[i].setup_calha();
   }
 
@@ -47,7 +46,7 @@ void setup() {
 void loop() {
   int atual; // índice do calha que recebeu um comando
   if (!client.connected()) {
-    reconnect();
+    reconnect(N_CALHAS);
   }
    // Processa as mensagens recebidas e mantém a conexão com o broker MQTT
   client.loop();
@@ -56,29 +55,24 @@ void loop() {
     p_mqtt_recebido->recebido = false;
 
     for(int i = 0; i < N_CALHAS; i++){
-      if(strcmp(p_mqtt_recebido->calha, calha[i].getid()) == 0){
-        atual = i;
+      atual = i;
+
+      if(strcmp(p_mqtt_recebido->calha, calha[i].getId()) == 0){
         break;
       }
     } 
 
-    calha[atual].verifica_sensor();
-    processa_mensagem(&calha[atual], p_mqtt_recebido);
+    char*comando = p_mqtt_recebido->comando;
+    int subcomando = atoi(p_mqtt_recebido->subcomando);
+    int processa = calha[atual].processa_mensagem(comando,subcomando);
+    if(processa == -1){ // se processa_mensagem retorna -1, quer dizer que houve um erro
+      Serial.println("enviando erro...");
+      publicar_status(calha[atual].getId(),(char*)"erro");
+    }
+    else if (processa>=0){
+      Serial.print("Contagem: ");
+      Serial.println(processa);
+    }
   } 
 }
 
-void processa_mensagem(Calha*calha, mqtt_recebido_t*p_mqtt_recebido){
-  char*comando = p_mqtt_recebido->comando;
-  char*subcomando = p_mqtt_recebido->subcomando;
-
-  if(strcmp(comando,"acionar") == 0){
-    Serial.println("acionando calha...");
-    calha->liberar_produto();
-  }
-  if(strcmp(comando,"reabastecer") == 0){
-    calha->setContagem(atoi(subcomando));
-    char topico[64];
-    sprintf(topico, "%s/%s/%s",id_bandeja, calha->getid(), "reabastecer");
-    publicar_mensagem(topico, subcomando);
-  }
-}

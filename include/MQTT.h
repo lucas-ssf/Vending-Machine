@@ -6,10 +6,6 @@
 #include <string>
 #include "WifiConfig.h"
 
-#define MQTT_STATUS "vending/status"           // Tópico MQTT para publicar mensagens
-#define MQTT_ERROR "vending/error"
-#define MQTT_COMANDO "vending/comando"
-
 typedef struct{
     char bandeja[64], calha[64], comando[64], subcomando[64];
     bool recebido;
@@ -21,11 +17,11 @@ extern int mqtt_acionar, mqtt_parar, mqtt_error;
 extern char mqtt_server[40];
 extern char mqtt_port[6];
 
-void publicar_mensagem(const char* topico, const char* mensagem);
+void publicar_status(char*id_calha, char* mensagem);
 void callback(char* topic, byte* message, unsigned int length);
-void reconnect();
+void reconnect(int N_CALHAS);
 void testar_conexao();
-void setup_mqtt(const char* id_bandeja, int N_CALHAS, const char**ids_calhas);
-void inicializar_topicos(const int N_MOTORERS);
+void setup_mqtt(char* id_bandeja, int N_CALHAS, char**ids_calhas);
+void inicializar_topicos(int N_MOTORERS, char**ids_calhas);
 
 #endif

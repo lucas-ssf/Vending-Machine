@@ -1,3 +1,6 @@
+#ifndef CALHA_H
+#define CALHA_H
+
 // Nesta versão o calha de passo gira até que caia o produto
 #include <Stepper.h>
 #include "WifiConfig.h"
@@ -5,7 +8,7 @@
 
 class Calha{
   private:
-    const char* id;
+    char* id;
     int tempo_max, velocidade,
         enable1, enable2,
         sensor_produto, sensor_parada,
@@ -14,7 +17,7 @@ class Calha{
     Stepper myStepper;
   public:
     Calha(
-               const char* id,
+               char* id,
                int tempo_max,
                int velocidade,
                int enable1,
@@ -28,11 +31,13 @@ class Calha{
     void setup_calha();
     void desligarCalha();
     void freioCalha();
-    void movimenta();
-    void sensor_otico();
+    int  movimenta();
     void loop_calha();
-    void verifica_sensor();
+    int  decrementaContagem();
+    int  verifica_sensor();
     void liberar_produto();
-    const char*getid();
-    void setContagem(int reabastecer);
+    char*getId();
+    int processa_mensagem(char*comando,int subcomando);
 };
+
+#endif

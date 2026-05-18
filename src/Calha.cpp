@@ -5,7 +5,7 @@
 const int stepsPerRevolution = 200; 
 
 Calha::Calha(
-               const char* id, // nome da calha no topico mqtt
+               char* id, // nome da calha no topico mqtt
                int tempo_max,  // tempo máximo para o primeiro produto cair
                int velocidade, // velocidade do motor
                int enable1,    
@@ -63,43 +63,43 @@ Calha::Calha(
       desligarCalha(); 
     }
     
-    void Calha::movimenta(){
+    int Calha::movimenta(){
       int tempo_inicial = millis();
       digitalWrite(enable1, HIGH); digitalWrite(enable2, HIGH);
     
-      while (digitalRead(sensor_parada) != HIGH && !(mqtt_error)) {
+      while(verifica_sensor()<0){
         myStepper.step(20);
         client.loop();
-        if (mqtt_parar == HIGH){
-          Serial.println("mqtt_parar = HIGH");
-          break;
-        }
-        else if ((millis()-tempo_inicial) >= tempo_max){
+        if ((millis()-tempo_inicial) >= tempo_max){
           Serial.println("Erro!");
-          publicar_mensagem(MQTT_ERROR, "erro");
-          mqtt_error = 1;
-          break;
+          return -1;
         }
       }
+      Serial.print("Tempo total: ");
       Serial.println(millis()-tempo_inicial);
-      mqtt_parar = LOW;
+      return 0;
     }
     
-    void Calha::sensor_otico() {
+    int Calha::decrementaContagem() {
       delay(5);
       if (contagem > 0)contagem--;
-      char mensagem[10];
-      sprintf(mensagem, "%d\0", contagem);
-      publicar_mensagem(MQTT_STATUS, mensagem);
+      return contagem;
+      //sprintf(mensagem, "%d\0", contagem);
+      //publicar_mensagem(MQTT_STATUS, mensagem);
     }
     
-    void Calha::verifica_sensor(){
+    //retorna a contagem de produtos atual (apos passar pelo sensor)
+    //se nenhum produto passou, retorna -1
+    int Calha::verifica_sensor(){
       if (digitalRead(sensor_parada)==HIGH) {
         freioCalha();
         delay(2000);
-        while (digitalRead(sensor_produto)==LOW) Serial.println("sensor_produto"); //trava o codigo ate que o produto seja retirado
+        while (digitalRead(sensor_produto)==LOW); //trava o codigo ate que o produto seja retirado
         Serial.println("Produto retirado!");
-        sensor_otico();
+        return decrementaContagem();
+      }
+      else{
+        return -1;
       }
     }
     
@@ -111,12 +111,29 @@ Calha::Calha(
           digitalWrite(led_movimento, LOW);
     }
 
-    const char* Calha::getid(){
+    char* Calha::getId(){
       return id;
     }
     
-    void Calha::setContagem(int reabastecer){
-      contagem = reabastecer;
-      Serial.print("contagem = ");
-      Serial.println(contagem);
+   // void Calha::setContagem(int reabastecer){
+   //   contagem = reabastecer;
+   //   Serial.print("contagem = ");
+   //   Serial.println(contagem);
+   // }
+    
+    int Calha::processa_mensagem(char*comando,int subcomando){
+      if(strcmp(comando,"acionar") == 0){
+        Serial.println("acionando calha...");
+        if(movimenta()<0){ // se movimenta() retorna -1, houve erro
+          return -1;
+        }else{
+          return contagem;
+        }
+      }
+      if(strcmp(comando,"reabastecer") == 0){
+        contagem = subcomando;
+        char topico[64];
+      }
+      return -2;
     }
+
