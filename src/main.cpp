@@ -12,8 +12,6 @@ char*ids_calhas[N_CALHAS]; //vetor com id de cada uma das calhas
 
 char*id_bandeja = (char*)"bandeja01";
 
-//Processa a informção recebida pelo MQTT e repassa para o calha
-
 Calha calha[N_CALHAS]={
   Calha(
     (char*)"calha01", //id da calha
