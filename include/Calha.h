@@ -1,7 +1,6 @@
 #ifndef CALHA_H
 #define CALHA_H
 
-// Nesta versão o calha de passo gira até que caia o produto
 #include <Stepper.h>
 #include "WifiConfig.h"
 #include "MQTT.h"
