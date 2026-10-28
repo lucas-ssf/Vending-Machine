@@ -6,32 +6,26 @@ int button_wm = 13;
 
 bool shouldSaveConfig = false;
 
-// Buffer for Wi-Fi credentials
+// Wifi
 char ssid[32];
 char pass[32];
 
 char mqtt_server[40];
 char mqtt_port[6];
 
-
-// id/name, placeholder/prompt, default, length
  WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
 
-// Callback to save config after web server updates SSID and password
 void saveConfigCallback() {
   Serial.println("Should save config");
   shouldSaveConfig = true;
 }
 
-// Save SSID and password to EEPROM
 void saveCredentials(const char* newSSID, const char* newPass) {
   Serial.println("Saving WiFi credentials to EEPROM...");
   
-  // Save SSID
   for (int i = 0; i < 32; i++) {
     EEPROM.write(0 + i, newSSID[i]);
   }
-  // Save Password
   for (int i = 0; i < 32; i++) {
     EEPROM.write(100 + i, newPass[i]);
   }
@@ -47,7 +41,6 @@ void saveCredentials(const char* newSSID, const char* newPass) {
   EEPROM.commit();
 }
 
-// Read SSID and password from EEPROM
 void readCredentials() {
   Serial.println("Reading WiFi credentials from EEPROM...");
   
@@ -85,21 +78,16 @@ void setup_wifi() {
   EEPROM.begin(512);
   pinMode(button_wm, INPUT_PULLUP);
 
-  // Set WiFiManager save config callback
   wm.setSaveConfigCallback(saveConfigCallback);
 
   if (digitalRead(button_wm) == LOW) {
     Serial.println("Button pressed, starting WiFiManager...");
-    // After connecting, parameter.getValue() will get you the configured value
-    // id/name placeholder/prompt default length
     WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqtt_server, 40);
     WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
 
-    //add all your parameters here
     wm.addParameter(&custom_mqtt_server);
     wm.addParameter(&custom_mqtt_port);
 
-    //wm.resetSettings();  // Reset to enable setup mode
     wm.startConfigPortal("ESP32_Config");
 
     strcpy(mqtt_server, custom_mqtt_server.getValue());
@@ -108,21 +96,18 @@ void setup_wifi() {
     Serial.println("\tmqtt_server : " + String(mqtt_server));
     Serial.println("\tmqtt_port : " + String(mqtt_port));
 
-    // Save config if needed
     if (shouldSaveConfig) {
       saveCredentials(wm.getWiFiSSID().c_str(), wm.getWiFiPass().c_str());
       Serial.println("Credentials saved.");
       ESP.restart();  // Restart to apply settings
     }
   } else {
-    // Load credentials from EEPROM
     readCredentials();
     Serial.print("Connecting to: ");
     Serial.println(ssid);
   }
 }
 
-// Função para conectar ao Wi-Fi
 void conectar_wifi() {
   Serial.print("Conectando-se ao WiFi");
   Serial.println(custom_mqtt_server.getValue());
