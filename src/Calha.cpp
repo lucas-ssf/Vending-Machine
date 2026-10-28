@@ -1,4 +1,3 @@
-// Nesta versão o calha de passo gira até que caia o produto
 #include "Debug.h"
 #include "Calha.h"
 
